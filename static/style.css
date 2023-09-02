@@ -1,0 +1,198 @@
+@import url("https://fonts.googleapis.com/css?family=Martel:200,400,600");
+*,
+*:before,
+*:after {
+  box-sizing: border-box;
+}
+
+.cf:after {
+  content: " ";
+  display: table;
+  clear: both;
+}
+
+body {
+  font: normal 0.875em "Martel", serif;
+  font-weight: 400;
+  background: darkgreen url(tile.jpg) repeat;
+  margin: auto;
+  padding: 20px;
+  max-width: 900px;
+  margin: auto;
+}
+
+h1,
+h2 {
+  font-weight: 300;
+}
+
+h1 {
+  text-align: center;
+  color: #ffcc00;
+  font-size: 3em;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+h2 {
+  margin-bottom: 2em;
+}
+
+p {
+  padding: 0;
+  margin: 0;
+}
+
+header {
+  margin-bottom: 20px;
+}
+
+.controls {
+  float: left;
+  display: block;
+  width: calc(100% - 240px);
+}
+
+button {
+  position: relative;
+  font: inherit;
+  font-weight: bold;
+  color: #fff;
+  line-height: 1;
+  padding: 15px 10px;
+  margin: 0 10px 0 0;
+  border: 0;
+  border-radius: 5px;
+  cursor: pointer;
+  outline: none;
+  background: #78909C;
+  box-shadow: 0px 3px 0px 0px #546E7A;
+}
+button:active {
+  top: 3px;
+  box-shadow: none;
+}
+button.deal {
+  width: 100px;
+  background: #2196F3;
+  box-shadow: 0px 3px 0px 0px #1565C0;
+}
+
+.ace-control {
+  color: white;
+  margin-top: 10px;
+}
+.ace-control p {
+  display: inline-block;
+  margin-right: 20px;
+  font-weight: bold;
+}
+.ace-control label {
+  padding: 0;
+  margin: 5px;
+  vertical-align: middle;
+}
+.ace-control input[type=radio] {
+  height: 20px;
+  width: 20px;
+  position: relative;
+  top: 5px;
+  margin-right: 6px;
+}
+
+.info {
+  float: right;
+  background-color: #c17a10;
+  color: #fff;
+  padding: 10px;
+  border-radius: 10px;
+  width: 240px;
+  margin-bottom: 30px;
+  font-family: monospace;
+}
+.info table {
+  width: 100%;
+}
+
+.players {
+  position: relative;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 20px;
+  border-radius: 1em;
+  box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+.player {
+  float: left;
+  width: 50%;
+  text-align: center;
+}
+
+.cards {
+  position: relative;
+  padding-top: 200px;
+}
+
+.card {
+  display: inline-block;
+  width: 120px;
+  height: 170px;
+  border-radius: 5px;
+  box-shadow: 0px 2px 3px rgba(0, 0, 0, 0.2);
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-53%) rotate(-7deg);
+}
+.card:nth-of-type(2n) {
+  transform: translateX(-48%) rotate(-6deg);
+}
+.card:nth-of-type(3n) {
+  transform: translateX(-47%) rotate(12deg);
+}
+.card:nth-of-type(3n+2) {
+  transform: translateX(-43%) rotate(4deg);
+}
+.card:first-of-type {
+  transform: translateX(-50%) rotate(0deg);
+}
+.card.back {
+  background: url(https://unsplash.it/240/340/?image=579) no-repeat center center;
+  background-size: cover;
+}
+.card img {
+  width: 150px;
+  height: 200px;
+}
+
+.score {
+  font-size: 2em;
+  font-weight: 70;
+}
+
+#result {
+  text-align: center;
+  font-size: 1em;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -70%);
+  background: #FDD835;
+}
+#result p {
+  margin: 20px;
+}
+#result p:last-of-type {
+  font-size: 2em;
+}
+
+.credit {
+  margin: 10px 0 30px;
+  text-align: center;
+  font-size: 11px;
+  font-family: sans-serif;
+  color: #eee;
+}
+.credit a {
+  color: inherit;
+}

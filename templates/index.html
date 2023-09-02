@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Blackjack Game</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"></script>
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<link rel="stylesheet" href="/static/style.css">
+	<style>
+		.player {
+			float: left;
+			margin-right: 20px;
+			margin-bottom: 20px;
+		}
+		.card {
+			float: left;
+			margin-right: 10px;
+			width: 60px;
+			height: 80px;
+			background-color: white;
+			text-align: center;
+			line-height: 80px;
+			font-size: 18px;
+			border: 1px solid black;
+		}
+		#dealer .card:nth-child(2) {
+			background-color: lightgray;
+		}
+	</style>
+</head>
+<body>
+    <header class="cf">
+  <h1>Blackjack Game</h1>
+  <div class="controls">
+<!--     <button class="new" id="newDeck">Create New Deck</button>-->
+<!--     <button class="shuffle" id="shuffleDeck">Shuffle Current Deck</button>-->
+    <button class="reset" id="reset-game">Reset Game</button>
+<!--    <button class="deal" id="dealCards">Deal</button>-->
+
+<!--    <div class="ace-control">-->
+<!--      <p>Set the Ace value</p>-->
+<!--      <label for="acesLow"><input id="acesLow" value="low" type="radio" name="acesRadio" />Low (1)</label>-->
+<!--      <label for="acesHigh"><input id="acesHigh" value="high" type="radio" name="acesRadio" />High (11)</label>-->
+<!--    </div>-->
+  </div>
+
+  <div class="info">
+    <table>
+      <tr>
+        <td>Deck ID</td>
+        <td align="right" id="deck"></td>
+      </tr>
+      <tr>
+        <td>Order</td>
+        <td align="right" id="shuffled"></td>
+      </tr>
+        </tr>
+        <tr>
+            <td>Status</td>
+        <td align="right" id="status"></td>
+        </tr>
+      <tr>
+        <td>Remaining Cards</td>
+        <td align="right" id="remaining"></td>
+      </tr>
+        <tr>
+            <td>Turn</td>
+        <td align="right" id="turn"></td>
+        </tr>
+    </table>
+  </div>
+</header>
+
+    <div id="players">
+        <div class="players cf" id="scores">
+        </div>
+    </div>
+    <div id="result"></div>
+
+	<p id="notification"></p>
+
+    <div id="join-game">
+        <p>Enter name to join game</p>
+        <form method="" >
+            <input type="text" name="name">
+            <input type="submit" value="Join Game">
+        </form>
+    </div>
+    <script>
+
+        $(function() {
+            var socket;
+            socket = io();
+            var name = '';
+            var socketId = '';
+            var interval=0;
+
+            // get result panel
+            var resultPanel = $('#result');
+
+            // hide reset button
+            $('#reset-game').hide();
+
+            $('#start-game').click(function() {
+                socket.emit('start_game');
+            });
+
+            $(document).on('click','#hit', function() {
+                socket.emit('player_hit');
+            });
+
+            $(document).on('click','#stand',function() {
+                socket.emit('player_stand');
+            });
+
+            $('#reset-game').click(function() {
+                socket.emit('reset_game');
+            });
+
+            $('form').submit(function() {
+                console.log('form submitted');
+                name = $('input[name=name]').val();
+                if (name.length === 0) {
+                    alert('Please enter a name');
+                    return false;
+                }
+                socket.emit('join_game', name);
+                return false;
+            });
+
+            socket.on('connect', function() {
+                $('#start-game').hide();
+                $('#players').hide();
+                socketId = socket.id;
+            });
+
+            socket.on('message', function(data) {
+                console.log(data);
+                // check if wating status is true
+                if (data['waiting'] === true) {
+                    // hide reset button
+                    $('#reset-game').hide();
+                    countdown = 30;
+                    // clear interval if it is already set
+                    if (interval) {
+                        clearInterval(interval);
+                        interval=0;
+                    }
+                    // start game after countdown is over
+                    interval = setInterval(function() {
+                        countdown--;
+                        if (countdown <= 0) {
+                            clearInterval(interval);
+                            resultPanel.empty();
+                            socket.emit('start_game');
+                        }
+                        // hide form
+                        $('#join-game').hide();
+                        // check if socket id is in  the first two players
+
+                        // show notification
+
+                        resultPanel.empty();
+                        resultPanel.html('<p>'+ data.message + ' in ' + countdown+ ' seconds</p>');
+
+                        //socket.emit('about_start',{message: 'Game will start in ' + countdown + ' seconds'});
+                    }, 1000);
+                }
+                else {
+                    // hide form
+                    $('#join-game').hide();
+                    resultPanel.empty();
+                    resultPanel.html('<p>'+ data.message + '</p>');
+                    // hide reset button
+                    $('#reset-game').hide();
+                }
+            });
+
+            socket.on('game_started', function(data) {
+                console.log('game started....');
+                // console.log(data);
+                $('#start-game').hide();
+                // hide form
+                $('#join-game').hide();
+                // hide notification
+                $('#notification').hide();
+                // check if deck is shuffled
+                updateheader(data);
+
+                // get the number of players
+                var numPlayers = data['game_state']['players'].length;
+
+                // grab the class player to update later
+                var players = $('.players');
+
+                // clear the players div
+                players.empty();
+
+                // get dealer
+                var dealer = data['game_state']['dealer'][0];
+
+                players.append('<div class="player one" id="player-' + dealer['id'] + '"></div>');
+                $('#player-' + dealer['id']).append('<h2>' + dealer['name'] + '</h2>');
+                $('#player-' + dealer['id']).append('' +
+                    '<div class="cards" id="p' + dealer['id']+'card">' +
+                    ' <div class="card back"></div>' +
+                    ' </div> <span class="score" id="p' + dealer['id']+'score">0</span><div class="actions" id="action'+dealer['id']+'"></div>'
+                );
+
+
+                // show  each player in data.players in the #players div
+                for (var i = 0; i <numPlayers; i++) {
+                    // set the data to be in columns of two
+                    var id = data['game_state']['players'][i]['id'];
+                    var name = data['game_state']['players'][i]['name'];
+                    players.append('<div class="player" id="player-' + id + '"></div>');
+                    $('#player-' + id).append('<h2>' + name + '</h2>');
+                    $('#player-' + id).append(
+                        '<div class="cards" id="p' + id + 'card"> <div class="card back"></div> </div>' +
+                        ' <span class="score" id="p'+ id + 'score">0</span><div class="actions" id="action'+id+'"></div>');
+
+                    // add action buttons to a player if it is their turn
+                    if (id === socketId) {
+                        // add the buttons
+                        $('#action' + id).append(
+                            '<button class="hit" id="hit">Hit</button>' +
+                            '<button class="stand" id="stand">Stand</button>'
+                        );
+                    }
+                    $('#players').show();
+                }
+            });
+
+            socket.on('Wait_for_players', function(data) {
+                resultPanel.empty();
+                resultPanel.html("<p>Waiting for players to join</p>");
+                $('#start-game').hide();
+                $('#players').hide();
+                // hide form
+                $('#join-game').hide();
+            });
+
+            socket.on('card_dealt', function(data) {
+                updateheader(data);
+
+                // remove the result panel
+                resultPanel.empty();
+                // update the cards in the hand of the dealer
+                var dealer = data['game_state']['dealer'][0];
+                var id = dealer['id'];
+
+                // clear the cards
+                $('#p'+id+'card').empty();
+
+
+                // get the cards in the hand
+                for (var j = 0; j < dealer['hand'].length; j++) {
+                    var card = dealer['hand'][j];
+                    // check if game state is dealer's turn
+                    if (data['game_state']['status'] === 'dealer_turn') {
+                        console.log('dealer turn');
+                        $('<div class="card">').append($('<img>').attr('src', card['image'])).appendTo($('#p'+id+'card'));
+                        $('#p'+id+'score').html(dealer['score']);
+                    }
+                    else {
+                        // hide the second card
+                        if (j === 1) {
+                            $('<div class="card back">').appendTo($('#p'+id+'card'));
+                        }
+                        else {
+                            $('<div class="card">').append($('<img>').attr('src', card['image'])).appendTo($('#p'+id+'card'));
+                            $('#p'+id+'score').html(card['value']);
+                        }
+                    }
+                }
+
+                // update the cards in the hand for each player
+                for (var i = 0; i < data['game_state']['players'].length; i++) {
+                    var player = data['game_state']['players'][i];
+                    var id = player['id'];
+
+                    // clear the cards
+                    $('#p'+id+'card').empty();
+
+                    // get the cards in the hand
+                    for (var j = 0; j < player['hand'].length; j++) {
+                        var card = player['hand'][j];
+                        $('<div class="card">').append($('<img>').attr('src', card['image'])).appendTo($('#p'+id+'card'));
+                        $('#p'+id+'score').html(player['score']);
+
+                        // update other players on when a player has hit or stood
+                        if (id !== socketId) {
+                            // empty the action div
+                            $('#action'+id).empty();
+                            // check if the player has hit or stood and update the other players
+                            if (player['hit'] === true) {
+                                //shout out to the player that hit
+                                $('#action'+id).html('<b>Hit</b>');
+                            }
+                            else if (player['stand'] === true) {
+                                // shout out to the player that stood
+                                $('#action'+id).html('<b>Stand</b>');
+                            }
+                        }
+
+                        // check if the player has busted
+                        if (player['bust'] === true) {
+                            // remove the buttons
+                            $('#action'+id).empty();
+                            // add a text at the buttons to show that the player has busted
+                            // add bold text
+                            $('#action'+id).html('<b>Busted</b>');
+                        }
+
+                        // if player has not busted check if they have won
+                        else if (player['win'] === true) {
+                            // remove the buttons
+                            $('#action'+id).empty();
+                            // add a text at the buttons to show that the player has busted
+                            // add bold text
+                            $('#action'+id).html('<b>Winner</b>');
+                        }
+
+
+                    }
+
+                }
+            });
+
+            socket.on('dealer_turn', function(data) {
+                // unflip the second card
+                $('#pdealercard').find('.card').eq(1).removeClass('back');
+                // update the score
+                $('#pdealerscore').html(data['game_state']['dealer'][0]['score']);
+                // update action text that dealer has played
+                $('#actiondealer').html('<b>'+ data['message']+'</b>');
+
+            });
+            socket.on('reset-game', function(data) {
+                // hide reset button
+                $('#reset-game').hide();
+                // reset the game
+                socket.emit('start_game');
+            });
+
+            socket.on('game_over', function(data) {
+                // show reset button
+                $('#reset-game').show();
+                // remove action buttons
+                $('.actions').empty();
+                // check if the game is over and winner is false and announce the winner
+                if (data['game_state']['winner']===null) {
+                    resultPanel.html("<p>Game Over</p>");
+                }
+                else {
+                    resultPanel.html("<p>Game Over</p>");
+                    resultPanel.append("<p>Winner(s) : " + data['game_state']['winner'] + "</p>");
+                }
+            });
+
+            socket.on('error', function(data) {
+                alert(data.message);
+            });
+
+            // on disconnect
+            socket.on('disconnect', function() {
+                // remove the result panel
+                resultPanel.empty();
+                resultPanel.html("<p>Disconnected</p>");
+                // reload the page
+                location.reload();
+            });
+
+            function updateheader(data) {
+                console.log(data);
+                if (data['game_state']['shuffled'] === true) {
+                    $('#shuffled').text('Shuffled');
+                    // update the remaining cards
+                    $('#remaining').text(data['game_state']['deck'].length);
+                    // update the deck id
+                    $('#deck').text(data['game_state']['deck_id']);
+                    // update turn
+                    $('#turn').text(data['game_state']['turn']);
+                    // update status
+                    $('#status').text(data['game_state']['status']);
+                }
+                else {
+                    $('#shuffled').text('Not Shuffled');
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>
