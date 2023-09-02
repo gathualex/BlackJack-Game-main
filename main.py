@@ -111,7 +111,6 @@ def on_join(name):
         emit('error', {'message': 'Game is full'})
         return
 
-
 @socketio.on('disconnect')
 def on_disconnect():
     """
@@ -135,7 +134,6 @@ def on_disconnect():
     # print(f'clients: {clients}')
     # print(f"game state clients {game_state['players']}")
     print('Client disconnected')
-
 
 @socketio.on('start_game')
 def on_start_game():
@@ -194,7 +192,6 @@ def on_start_game():
             )
             socketio.sleep(2)
 
-
 @socketio.on('player_hit')
 def on_player_hit():
     card = deal_card()
@@ -251,7 +248,6 @@ def on_player_hit():
                     to='room'
                 )
                 break
-
 
 @socketio.on('player_stand')
 def on_player_stand():
@@ -450,7 +446,6 @@ def on_player_stand():
 
             socketio.sleep(2)
 
-
 @socketio.on('reset_game')
 def on_reset_game():
     # print('resetting game')
@@ -479,7 +474,6 @@ def on_reset_game():
         to='room'
     )
 
-
 @socketio.on('about_start')
 def on_about_start(message):
 
@@ -492,6 +486,6 @@ def on_about_start(message):
     )
 
 
-# run the app
-# if __name__ == '__main__':
-#     socketio.run(app, debug=True)
+#run the app
+if __name__ == '__main__':
+    socketio.run(app, debug=True)
